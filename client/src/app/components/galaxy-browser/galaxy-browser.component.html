@@ -1,0 +1,137 @@
+<div class="galaxy-browser-page">
+  <div class="page-header d-flex justify-content-between">
+    <div class="">
+      <h2 class="mb-1">Galaxy Classifier</h2>
+      <p class="page-subtitle mb-0">
+        Browse random images from S3, shuffle for more, or upload your own image for prediction.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="shuffleImages()"
+      [disabled]="loadingImages || shufflingImages || uploadingAndPredicting || predictingGalleryImage">
+      {{ shufflingImages ? 'Shuffling...' : 'Shuffle Images' }}
+    </button>
+  </div>
+  @if(errorMessage){
+    <div class="alert alert-danger mt-3">
+        {{ errorMessage }}
+    </div>
+}
+    @if(successMessage){
+        <div class="alert alert-success mt-3">
+            {{ successMessage }}
+        </div>
+    }
+
+  <div class="upload-card">
+    <div class="upload-left">
+      <h5 class="mb-2">Upload an image</h5>
+      <p class="text-muted mb-3">
+        Upload a local image and send it to the prediction endpoint.
+      </p>
+
+      <input
+        type="file"
+        accept=".jpg,.jpeg,.png,.webp,image/*"
+        (change)="onFileSelected($event)" />
+
+    @if(uploadedFileName){
+      <div class="selected-file mt-2">
+        Selected file: <strong>{{ uploadedFileName }}</strong>
+      </div>
+    }
+    </div>
+
+    <div class="upload-right">
+      <button
+        type="button"
+        class="btn btn-success"
+        (click)="uploadAndPredict()"
+        [disabled]="!uploadedFile || uploadingAndPredicting || loadingImages || shufflingImages">
+        {{ uploadingAndPredicting ? 'Uploading & Predicting...' : 'Upload and Predict' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="gallery-section">
+    <div class="section-header">
+      <h4 class="mb-0">Random S3 Images</h4>
+      <span class="image-count">{{ images.length }} images</span>
+    </div>
+
+    @if(loadingImages){
+        <div class="loading-state">
+        Loading images...
+        </div>
+    }
+
+    @if(!loadingImages && images.length === 0){
+        <div class="empty-state">
+        No images were returned.
+        </div>
+    }
+    @if(!loadingImages && images.length > 0){
+
+        <div class="image-grid">
+            @for(image of images; track $index){
+                <div
+                    class="image-card"
+                    [class.selected]="isSelected(image)"
+                    (click)="onGalleryImageClicked(image)">
+                    <div class="gradcam-wrapper">
+                        <img
+                            class="base-image"
+                            [src]="image.imageUrl"
+                            [alt]="image.fileName"
+                            loading="lazy" />
+                        @if(gradCamUrl && prediction?.s3Uri === image.s3Uri){
+                            <img
+                                class="gradcam-overlay"
+                                [src]="gradCamUrl"
+                                alt="Grad-CAM overlay"
+                            />
+                        }
+                    </div>
+
+                    <div class="image-meta">
+                    <div class="file-name" [title]="image.fileName">{{ image.fileName }}</div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    @if(selectedImage) {
+        <div class="predict-selected-row">
+        <div class="selected-summary">
+            Selected:
+            <strong>{{ selectedImage?.fileName }}</strong>
+        </div>
+
+        <button
+            type="button"
+            class="btn btn-outline-primary"
+            (click)="predictSelectedImage()"
+            [disabled]="predictingGalleryImage || uploadingAndPredicting">
+            {{ predictingGalleryImage ? 'Predicting...' : 'Predict Selected Image' }}
+        </button>
+        </div>
+    }
+  </div>
+  @if(prediction) {
+    <div>
+      <app-galaxy-result-card
+          [title]="'Prediction Result'"
+          [prediction]="prediction"
+          [predictionType]="'res'">
+      </app-galaxy-result-card>
+      <app-galaxy-result-card
+          [title]="'Prediction Result'"
+          [prediction]="prediction"
+          [predictionType]="'gal'">
+      </app-galaxy-result-card>
+    </div>
+}
+</div>

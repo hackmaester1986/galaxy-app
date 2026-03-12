@@ -1,0 +1,48 @@
+<div class="prediction-card">
+  <div class="prediction-header">
+    <div>
+      <h4 class="mb-1">{{ title }}</h4>
+    </div>
+
+    @if (modelName) {
+      <div class="model-version">
+        Model: {{ modelName }}
+      </div>
+    }
+  </div>
+
+  <div class="prediction-main">
+    <div class="main-metric">
+      <div class="metric-label">Predicted Label</div>
+      <div class="metric-value">{{ predictedLabel }}</div>
+    </div>
+
+    <div class="main-metric">
+      <div class="metric-label">Confidence</div>
+      <div class="metric-value">{{ formatProbability(confidence) }}</div>
+    </div>
+  </div>
+
+  @if (topPredictions.length) {
+    <div class="top-predictions">
+      <h5>Top Predictions</h5>
+
+      @for (item of topPredictions; track $index) {
+        <div class="top-prediction-row">
+          <div class="label">{{ item.label }}</div>
+
+          <div class="bar-wrap">
+            <div
+              class="bar-fill"
+              [style.width.%]="item.probability * 100">
+            </div>
+          </div>
+
+          <div class="probability">
+            {{ formatProbability(item.probability) }}
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

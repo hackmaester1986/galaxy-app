@@ -1,0 +1,237 @@
+node_modules
+
+# =========================
+
+# Secrets / credentials
+
+# =========================
+
+appsettings.Development.json
+appsettings.*.Development.json
+**/Properties/launchSettings.json
+*.secrets.json
+.env
+.env.*
+*.pem
+*.key
+
+# AWS credentials
+
+.aws/
+.aws/credentials
+.aws/config
+
+# =========================
+
+# .NET / ASP.NET Core
+
+# =========================
+
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+*.csproj.user
+*.dbmdl
+*.jfm
+*.pdb
+*.cache
+*.log
+
+# Rider / Visual Studio
+
+.vs/
+.idea/
+
+# Publish output
+
+publish/
+wwwroot/dist/
+
+# =========================
+
+# Angular / Node
+
+# =========================
+
+node_modules/
+dist/
+.tmp/
+.angular/
+.angular/cache/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+
+src/environments/environment*.local.ts
+
+# =========================
+
+# VS Code
+
+# =========================
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# =========================
+
+# OS files
+
+# =========================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =========================
+
+# Coverage / testing
+
+# =========================
+
+coverage/
+*.lcov
+
+# =========================
+# Python / ML
+# =========================
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+.venv/
+venv/
+env/
+
+*.egg-info/
+.eggs/
+
+pip-wheel-metadata/
+
+# Python notebooks
+.ipynb_checkpoints/
+
+# Python testing
+.pytest_cache/
+
+# Python coverage
+.coverage
+coverage.xml
+htmlcov/
+
+# Python build
+build/
+dist/
+
+# =========================
+# Docker
+# =========================
+
+*.tar
+*.tar.gz
+*.dockerignore.local
+docker-compose.override.yml
+
+# =========================
+# Model artifacts
+# =========================
+
+artifacts/models/
+artifacts/evaluations/
+*.pt
+*.pth
+*.onnx
+*.ckpt
+*.h5
+*.model
+
+# =========================
+# Data files
+# =========================
+
+data/raw/
+data/interim/
+data/processed/
+
+# =========================
+# SageMaker artifacts
+# =========================
+
+model.tar.gz
+*.tar.gz
+
+# =========================
+# Logs
+# =========================
+
+logs/
+*.log
+*.out
+*.err
+
+# Angular build artifacts
+coverage/
+*.angular/cache/
+
+# =========================
+# Temporary files
+# =========================
+
+*.tmp
+*.temp
+*.bak
+*.swp
+
+
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
+
