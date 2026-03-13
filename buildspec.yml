@@ -36,7 +36,7 @@ phases:
   post_build:
     commands:
       - echo Build completed on `date`
-      - echo Published files:
+      - echo Published files
       - find publish -maxdepth 3 -type f | sort | head -200
 
 artifacts:
