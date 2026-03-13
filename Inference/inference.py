@@ -101,18 +101,6 @@ def get_device() -> torch.device:
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def get_transform() -> transforms.Compose:
-    return transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(IMG_SIZE),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225],
-        ),
-    ])
-
-
 def parse_s3_uri(s3_uri: str) -> tuple[str, str]:
     parsed = urlparse(s3_uri)
     if parsed.scheme != "s3" or not parsed.netloc or not parsed.path:
@@ -128,10 +116,32 @@ def load_image_from_s3(s3_uri: str) -> Image.Image:
     return Image.open(io.BytesIO(image_bytes)).convert("RGB")
 
 
-def preprocess_image(image: Image.Image, image_transform: transforms.Compose) -> tuple[torch.Tensor, np.ndarray]:
-    resized = image.resize((IMG_SIZE, IMG_SIZE))
-    rgb_uint8 = np.array(resized).astype(np.uint8)
-    tensor = image_transform(resized).unsqueeze(0)
+def get_geom_transform() -> transforms.Compose:
+    return transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(IMG_SIZE),
+    ])
+
+
+def get_model_transform() -> transforms.Compose:
+    return transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(
+            mean=[0.485, 0.456, 0.406],
+            std=[0.229, 0.224, 0.225],
+        ),
+    ])
+
+def preprocess_image(
+    image: Image.Image,
+    geom_transform: transforms.Compose,
+    model_transform: transforms.Compose,
+) -> tuple[torch.Tensor, np.ndarray]:
+    processed = geom_transform(image)
+
+    rgb_uint8 = np.array(processed).astype(np.uint8)
+    tensor = model_transform(processed).unsqueeze(0)
+
     return tensor, rgb_uint8
 
 
@@ -228,7 +238,8 @@ def generate_gradcam_base64(
 
 def load_models() -> dict[str, Any]:
     device = get_device()
-    image_transform = get_transform()
+    geom_transform = get_geom_transform()
+    model_transform = get_model_transform()
 
     logger.info("Loading models from %s", MODEL_DIR)
     logger.info("Model dir contents: %s", [p.name for p in MODEL_DIR.iterdir()])
@@ -240,7 +251,8 @@ def load_models() -> dict[str, Any]:
 
     return {
         "device": device,
-        "transform": image_transform,
+        "geom_transform": geom_transform,
+        "model_transform": model_transform,
         "resnet": {
             "stage1": resnet_stage1,
             "stage2": resnet_stage2,
@@ -290,7 +302,11 @@ async def invocations(request: Request) -> JSONResponse:
 
     try:
         image = load_image_from_s3(s3_uri)
-        input_tensor, rgb_uint8 = preprocess_image(image, MODEL_BUNDLE["transform"])
+        input_tensor, rgb_uint8 = preprocess_image(
+            image,
+            MODEL_BUNDLE["geom_transform"],
+            MODEL_BUNDLE["model_transform"],
+        )
         input_tensor = input_tensor.to(MODEL_BUNDLE["device"])
 
         # ---------------------------------------------------------------------

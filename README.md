@@ -59,6 +59,63 @@ Amazon SageMaker
   * Hosts the trained galaxy classification model
   * Returns prediction probabilities for each image
 
+# Inference Service
+
+  The Inference folder contains the code required to serve the trained models through an Amazon SageMaker real-time inference endpoint.
+
+  This service loads the trained models, preprocesses input images, generates predictions, and optionally produces Grad-CAM visualizations for explainability.
+
+### Dockerfile
+
+Defines the container environment used by SageMaker for model hosting.
+
+The container:
+  * installs Python dependencies
+  * copies the inference code
+  * exposes the /invocations endpoint required by SageMaker
+  * starts the inference server
+
+### serve.py
+
+Bootstraps the inference server inside the container.
+
+Responsibilities:
+  * start the web server
+  * expose SageMaker compatible endpoints
+  * route requests to the inference logic
+
+Typical SageMaker endpoints include:
+
+POST /invocations
+GET /ping
+
+### inference.py
+
+Contains the main inference logic.
+
+Responsibilities include:
+  * loading trained models
+  * preprocessing input images
+  * running predictions
+  * generating Grad-CAM heatmaps
+  * formatting responses returned to the API
+
+The models are loaded when the container starts and cached in memory to ensure low-latency predictions.
+
+galaxycnn.py
+
+Defines the custom CNN architecture used alongside ResNet18.
+
+requirements.txt
+
+Lists the Python dependencies needed to run the inference service, including:
+
+  * PyTorch
+  * torchvision
+  * numpy
+  * pillow
+  * pytorch-grad-cam
+
 # Application Features
 
 ### Galaxy Image Gallery
@@ -116,7 +173,13 @@ galaxy-app
 │       ├─ components
 │       ├─ services
 │       └─ models
-│
+├─ Inference/
+│   └─ Inference Container
+│       ├─ Dockerfile
+│       ├─ serve.py
+│       ├─ galaxycnn.py
+│       ├─ requirements.txt
+│       └─ inference.py
 ├─ galaxy-app.sln
 └─ README.md
 ```
@@ -128,7 +191,7 @@ galaxy-app
 ## 1. Clone the repository
 
 ```
-git clone <repo-url>
+git clone https://github.com/hackmaester1986/galaxy-app.git
 cd galaxy-app
 ```
 
@@ -172,12 +235,6 @@ The API will start at:
 
 ```
 http://localhost:5165
-```
-
-Swagger UI:
-
-```
-http://localhost:5165/swagger
 ```
 
 ---
@@ -244,7 +301,7 @@ The manifest is stored in S3 and loaded by the API.
 
 # Deployment
 
-The easiest deployment path is to deploy the **combined frontend and backend** to Elastic Beanstalk.
+The application can be deployed to AWS Elastic Beanstalk.
 
 ### Steps
 
@@ -265,7 +322,7 @@ dotnet publish -c Release
 
 4. Deploy the published output to an **Elastic Beanstalk environment**
 
-Production authentication should use an **EC2 instance IAM role** instead of static AWS credentials.
+Production environments should use IAM roles instead of static AWS credentials.
 
 ---
 
@@ -296,6 +353,90 @@ Production authentication should use an **EC2 instance IAM role** instead of sta
 * Image labeling feedback loop for model retraining
 
 ---
+
+# How the Model Works
+
+The galaxy classifier uses a two-stage deep learning pipeline to classify astronomical images.
+This design improves accuracy by separating the detection of galaxies from the classification of galaxy morphology.
+
+# Stage 1: Galaxy Detection
+
+The first model determines whether an image contains a galaxy.
+
+Classes:
+  * galaxy
+  * other
+
+This stage filters out images that are not galaxies before attempting morphology classification.
+
+# Stage 2: Galaxy Morphology Classification
+
+If Stage 1 predicts that the image contains a galaxy, the image is passed to a second model that predicts the galaxy morphology.
+
+Classes:
+  * elliptical
+  * disk
+
+These categories correspond to major galaxy types used in astronomy.
+
+# Model Architectures
+
+Two different neural network architectures are trained and evaluated:
+
+# ResNet18
+
+A pretrained ResNet18 model is fine-tuned on the galaxy dataset.
+
+Advantages:
+  * strong feature extraction
+  * proven performance on image classification tasks
+  * transfer learning from ImageNet
+
+# Custom GalaxyCNN
+
+A custom convolutional neural network designed specifically for this dataset.
+
+The architecture includes:
+  * multiple convolutional blocks
+  * batch normalization
+  * dropout regularization
+  * fully connected classification layers
+
+This architecture serves as a baseline and provides an alternative to the pretrained model.
+
+# Ensemble Strategy
+
+Both models produce predictions for each stage.
+
+The final prediction is generated using an ensemble approach that combines the outputs of the models.
+
+This helps improve prediction robustness and reduces sensitivity to individual model errors.
+
+# Grad-CAM Explainability
+
+Grad-CAM (Gradient-weighted Class Activation Mapping) is used to visualize which parts of the image influenced the model's prediction.
+
+The heatmap highlights regions of the image that contributed most strongly to the predicted class.
+
+This helps verify that the model is focusing on the galaxy structure rather than background noise.
+
+Example interpretation:
+  * bright regions in the heatmap correspond to areas important for the classification decision
+  * for galaxies, the model typically focuses on the galaxy core and disk structure
+
+# Training Pipeline
+
+The models were trained using the Galaxy Zoo dataset with the following workflow:
+
+1. Dataset preparation and label filtering
+2. Train/validation/test splitting
+3. Training stage 1 and stage 2 models
+4. Evaluation and model selection
+5. Deployment to SageMaker for real-time inference
+
+The training pipeline is implemented in a separate repository.
+See the model training pipeline repository:
+  https://github.com/hackmaester1986/Galaxy-Classification
 
 # License
 

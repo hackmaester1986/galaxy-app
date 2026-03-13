@@ -1,0 +1,45 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      dotnet: 8.0
+      nodejs: 20
+    commands:
+      - echo Installing frontend dependencies...
+      - cd client
+      - npm ci
+      - cd ..
+
+  pre_build:
+    commands:
+      - echo Preparing wwwroot...
+      - mkdir -p api/GalaxyClassifier/wwwroot
+      - rm -rf api/GalaxyClassifier/wwwroot/*
+
+  build:
+    commands:
+      - echo Building Angular app...
+      - cd client
+      - npx ng build --configuration production
+      - cd ..
+
+      - echo Copying Angular build output into ASP.NET Core wwwroot...
+      - cp -R client/dist/client/browser/* api/GalaxyClassifier/wwwroot/
+
+      - echo Restoring .NET dependencies...
+      - dotnet restore api/GalaxyClassifier/GalaxyClassifier.csproj
+
+      - echo Publishing .NET application...
+      - dotnet publish api/GalaxyClassifier/GalaxyClassifier.csproj -c Release -o publish
+
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Published files:
+      - find publish -maxdepth 3 -type f | sort | head -200
+
+artifacts:
+  base-directory: publish
+  files:
+    - '**/*'
