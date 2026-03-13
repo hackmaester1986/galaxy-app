@@ -64,7 +64,13 @@ var app = builder.Build();
 
 app.UseCors("Frontend");
 app.UseAuthorization();
+
+// Serve Angular files from wwwroot
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.MapControllers();
 
+// For Angular client-side routing
+app.MapFallbackToFile("index.html");
 app.Run();
 
